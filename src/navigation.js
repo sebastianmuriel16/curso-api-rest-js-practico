@@ -1,3 +1,7 @@
+let page = 1;
+let infiniteScroll;
+let maxPage;
+
 searchBtn.addEventListener('click', () => {
     location.hash = `#search=${searchFormInput.value}`;// location es para saber la ubucacionde la url
 })
@@ -14,6 +18,10 @@ arrowBtn.addEventListener('click', async () => {
 const navigator = () => {
     console.log({ location })
 
+    if (infiniteScroll) {
+        window.removeEventListener('scroll', infiniteScroll, { passive: false });
+        infiniteScroll = null;
+    }
     if (location.hash.startsWith('#trends')) {
         trendsPage()
     }
@@ -31,13 +39,17 @@ const navigator = () => {
     }
 
     window.scrollTo(0, 0);
+
+    if (infiniteScroll) {
+        window.addEventListener('scroll', infiniteScroll, { passive: false });
+    }
 }
+
 window.addEventListener('DOMContentLoaded', navigator, false);
 window.addEventListener('hashchange', navigator, false);
+window.addEventListener('scroll', infiniteScroll, false)
 
 const homePage = () => {
-    console.log('home')
-
     headerSection.classList.remove('header-container--long');
     headerSection.style.background = '';
     arrowBtn.classList.add('inactive');
@@ -47,12 +59,14 @@ const homePage = () => {
     searchForm.classList.remove('inactive');
 
     trendingPreviewSection.classList.remove('inactive');
+    likedMoviesSection.classList.remove('inactive');
     categoriesPreviewSection.classList.remove('inactive');
     genericSection.classList.add('inactive');
     movieDetailSection.classList.add('inactive');
 
     getTrendingMoviesPreview();
     getCategoriesMovies();
+    getLikedMovies();
 }
 const searchPage = () => {
     console.log('search')
@@ -66,12 +80,14 @@ const searchPage = () => {
     searchForm.classList.remove('inactive');
 
     trendingPreviewSection.classList.add('inactive');
+    likedMoviesSection.classList.add('inactive');
     categoriesPreviewSection.classList.add('inactive');
     genericSection.classList.remove('inactive');
     movieDetailSection.classList.add('inactive');
 
     const [_, query] = location.hash.split('=') //=> ['#search', 'buscado'] el termino para elelmentos buscados suele ser query
     getMoviesBySearch(query);
+    infiniteScroll = loadMoreBysearch(query);
 
 }
 const movieDetailsPage = () => {
@@ -86,6 +102,7 @@ const movieDetailsPage = () => {
     searchForm.classList.add('inactive');
 
     trendingPreviewSection.classList.add('inactive');
+    likedMoviesSection.classList.add('inactive');
     categoriesPreviewSection.classList.add('inactive');
     genericSection.classList.add('inactive');
     movieDetailSection.classList.remove('inactive');
@@ -105,6 +122,7 @@ const categoriesPage = () => {
     searchForm.classList.add('inactive');
 
     trendingPreviewSection.classList.add('inactive');
+    likedMoviesSection.classList.add('inactive');
     categoriesPreviewSection.classList.add('inactive');
     genericSection.classList.remove('inactive');
     movieDetailSection.classList.add('inactive');
@@ -112,6 +130,7 @@ const categoriesPage = () => {
     const [_, categoryData] = location.hash.split('=') //=> ['#category', 'idname']
     const [categoryId, categoryName] = categoryData.split('-') // solo re renombran los iteradores
     getMoviesByCategory(categoryId, decodeURI(categoryName)); // decorate es para quitar reemplazos de caracteres raros ejemplo: %20
+    infiniteScroll = loadMoreByCategory(categoryId);
 
 }
 
@@ -127,6 +146,7 @@ const trendsPage = () => {
     searchForm.classList.add('inactive');
 
     trendingPreviewSection.classList.add('inactive');
+    likedMoviesSection.classList.add('inactive');
     categoriesPreviewSection.classList.add('inactive');
     genericSection.classList.remove('inactive');
     movieDetailSection.classList.add('inactive');
@@ -134,4 +154,5 @@ const trendsPage = () => {
     headerCategoryTitle.innerHTML = 'Tendencias';
 
     getTrendingMovies();
+    infiniteScroll = loadMore;
 }
